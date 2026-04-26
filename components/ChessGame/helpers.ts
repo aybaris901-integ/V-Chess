@@ -108,4 +108,3 @@ export function getBestSimpleMove(chess: Chess): Move | null {
 
 export function isSquareAttackedByBlack(chess: Chess, square: Square) {
   return (chess as any).isAttacked(square, "b");
-}

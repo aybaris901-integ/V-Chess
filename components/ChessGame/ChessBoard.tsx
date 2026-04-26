@@ -2,12 +2,14 @@ import type { Square } from "chess.js";
 import { pieceSymbols } from "./constants";
 import { getSquare } from "./helpers";
 import type { LastMove } from "./types";
+import { supabase } from "@/lib/supabaseClient";
+import type { User } from "@supabase/supabase-js";
 
 type ChessBoardProps = {
   board: ReturnType<import("chess.js").Chess["board"]>;
   selectedSquare: Square | null;
   legalMoves: Square[];
-  lastMove: LastMove;
+  lastMove: LastMove | null;
   onSquareClick: (square: Square) => void;
 };
 

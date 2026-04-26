@@ -213,24 +213,29 @@ export default function ChessGame() {
         </div>
 
         <VPanel
-          gameMode={chess.gameMode}
-          aiThinking={chess.aiThinking}
-          isGameFinished={chess.isGameFinished}
-          result={chess.getGameResult()}
-          totalMoves={chess.moveHistory.length}
-          compoundLevel={chess.compoundLevel}
-          missionRating={chess.getMissionRating()}
-          injectAnimating={chess.injectAnimating}
-          threatScanning={chess.threatScanning}
-          blunderWarning={chess.blunderWarning}
-          aiHint={chess.aiHint}
-          threats={chess.threats}
-          moveHistory={chess.moveHistory}
-          onChangeGameMode={chess.changeGameMode}
-          onInjectV={chess.injectV}
-          onThreatVision={chess.threatVision}
-          onOpenProModal={() => chess.setShowProModal(true)}
-        />
+  gameMode={chess.gameMode}
+  aiThinking={chess.aiThinking}
+  isGameFinished={chess.isGameFinished}
+  result={chess.getGameResult()}
+  totalMoves={chess.moveHistory.length}
+  compoundLevel={chess.compoundLevel}
+  missionRating={chess.getMissionRating()}
+  injectAnimating={chess.injectAnimating}
+  threatScanning={chess.threatScanning}
+  blunderWarning={chess.blunderWarning}
+  aiHint={chess.aiHint}
+  threats={chess.threats}
+  moveHistory={chess.moveHistory}
+  onChangeGameMode={chess.changeGameMode}
+  onInjectV={chess.injectV}
+  onThreatVision={chess.threatVision}
+  onOpenProModal={() => chess.setShowProModal(true)}
+  user={chess.user}
+  recentGames={chess.recentGames}
+  authMessage={chess.authMessage}
+  signInWithGithub={chess.signInWithGithub}
+  signOut={chess.signOut}
+/>
       </section>
 
       {chess.showIntro && (

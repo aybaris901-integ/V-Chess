@@ -1,5 +1,14 @@
 import type { GameMode } from "./types";
 import GameSummary from "./GameSummary";
+import type { User } from "@supabase/supabase-js";
+
+type RecentGame = {
+  id: string;
+  result: string;
+  game_mode: string;
+  compound_left: number;
+  created_at: string;
+};
 
 type VPanelProps = {
   gameMode: GameMode;
@@ -19,6 +28,12 @@ type VPanelProps = {
   onInjectV: () => void;
   onThreatVision: () => void;
   onOpenProModal: () => void;
+
+  user: User | null;
+  recentGames: RecentGame[];
+  authMessage: string | null;
+  signInWithGithub: () => void;
+  signOut: () => void;
 };
 
 export default function VPanel({
@@ -39,6 +54,11 @@ export default function VPanel({
   onInjectV,
   onThreatVision,
   onOpenProModal,
+  user,
+  recentGames,
+  authMessage,
+  signInWithGithub,
+  signOut,
 }: VPanelProps) {
   return (
     <aside
@@ -93,7 +113,105 @@ export default function VPanel({
         Live tactical HUD. Monitor energy, mode, AI status and activated
         protocols.
       </p>
+    <div
+  style={{
+    marginBottom: "18px",
+    padding: "14px",
+    borderRadius: "12px",
+    background: "rgba(255,255,255,0.04)",
+    border: "1px solid rgba(255, 203, 5, 0.25)",
+  }}
+>
+  <strong style={{ color: "#ffcb05", textTransform: "uppercase" }}>
+    Player Profile
+  </strong>
 
+  {user ? (
+    <>
+      <p
+        style={{
+          marginTop: "8px",
+          color: "#f5f0df",
+          fontFamily: "Arial, sans-serif",
+          fontSize: "14px",
+          lineHeight: 1.4,
+        }}
+      >
+        Signed in as{" "}
+        <strong>
+          {user.user_metadata?.user_name ||
+            user.user_metadata?.name ||
+            user.email}
+        </strong>
+      </p>
+
+      <button
+        onClick={signOut}
+        style={{
+          marginTop: "12px",
+          width: "100%",
+          padding: "10px 12px",
+          borderRadius: "8px",
+          border: "1px solid rgba(255, 203, 5, 0.45)",
+          background: "transparent",
+          color: "#ffcb05",
+          cursor: "pointer",
+          fontWeight: 900,
+          textTransform: "uppercase",
+        }}
+      >
+        Sign Out
+      </button>
+    </>
+  ) : (
+    <>
+      <p
+        style={{
+          marginTop: "8px",
+          color: "#d6c99c",
+          fontFamily: "Arial, sans-serif",
+          fontSize: "14px",
+          lineHeight: 1.4,
+        }}
+      >
+        Sign in to save completed missions.
+      </p>
+
+      <button
+        onClick={signInWithGithub}
+        style={{
+          marginTop: "12px",
+          width: "100%",
+          padding: "11px 12px",
+          borderRadius: "8px",
+          border: "2px solid #ffcb05",
+          background: "#ffcb05",
+          color: "#111",
+          cursor: "pointer",
+          fontWeight: 900,
+          textTransform: "uppercase",
+          boxShadow: "4px 4px 0 #ac1820",
+        }}
+      >
+        Sign in with GitHub
+      </button>
+    </>
+  )}
+
+  {authMessage && (
+    <p
+      style={{
+        marginTop: "10px",
+        color: "#ffcb05",
+        fontFamily: "Arial, sans-serif",
+        fontSize: "13px",
+        lineHeight: 1.4,
+      }}
+    >
+      {authMessage}
+    </p>
+  )}
+</div>
       <div
         style={{
           display: "grid",
@@ -342,6 +460,52 @@ export default function VPanel({
       )}
 
       <BattleLog moveHistory={moveHistory} />
+
+      {user && (
+  <div
+    style={{
+      marginTop: "18px",
+      padding: "14px",
+      borderRadius: "12px",
+      background: "rgba(255,255,255,0.04)",
+      border: "1px solid rgba(255, 203, 5, 0.25)",
+    }}
+  >
+    <h3
+      style={{
+        marginBottom: "10px",
+        color: "#ffcb05",
+        textTransform: "uppercase",
+      }}
+    >
+      Recent Missions
+    </h3>
+
+    {recentGames.length === 0 ? (
+      <p style={{ color: "#b8aa82", fontFamily: "Arial, sans-serif" }}>
+        No saved missions yet.
+      </p>
+    ) : (
+      <ul
+        style={{
+          paddingLeft: "18px",
+          color: "#f5f0df",
+          fontFamily: "Arial, sans-serif",
+          lineHeight: 1.6,
+          fontSize: "14px",
+        }}
+      >
+        {recentGames.map((savedGame) => (
+          <li key={savedGame.id}>
+            {savedGame.result} ·{" "}
+            {savedGame.game_mode === "ai" ? "Vs AI" : "Local Duel"} ·{" "}
+            {savedGame.compound_left}% V left
+          </li>
+        ))}
+      </ul>
+    )}
+  </div>
+)}
 
       <button
         onClick={onOpenProModal}

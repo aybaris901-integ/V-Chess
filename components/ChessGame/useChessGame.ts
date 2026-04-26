@@ -2,6 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { Chess, Move, Square } from "chess.js";
+import { supabase } from "@/lib/supabaseClient";
+import type { User } from "@supabase/supabase-js";
+
 import { pieceSymbols, STORAGE_KEY } from "./constants";
 import {
   getBestSimpleMove,
@@ -11,7 +14,15 @@ import {
   getStatus,
   isSquareAttackedByBlack,
 } from "./helpers";
-import type { AbilityFlash, GameMode, LastMove, PendingMove, SavedGameData } from "./types";
+import type { GameMode, LastMove, PendingMove, SavedGameData } from "./types";
+
+type RecentGame = {
+  id: string;
+  result: string;
+  game_mode: string;
+  compound_left: number;
+  created_at: string;
+};
 
 export function useChessGame() {
   const [fen, setFen] = useState(() => new Chess().fen());
@@ -20,19 +31,28 @@ export function useChessGame() {
   const [message, setMessage] = useState("White to move");
   const [aiHint, setAiHint] = useState<string | null>(null);
   const [threats, setThreats] = useState<string[]>([]);
-  const [pendingMove, setPendingMove] = useState<PendingMove>(null);
+  const [moveHistory, setMoveHistory] = useState<string[]>([]);
+  const [pendingMove, setPendingMove] = useState<PendingMove | null>(null);
   const [blunderWarning, setBlunderWarning] = useState<string | null>(null);
+
   const [injectAnimating, setInjectAnimating] = useState(false);
   const [threatScanning, setThreatScanning] = useState(false);
   const [aiThinking, setAiThinking] = useState(false);
   const [compoundLevel, setCompoundLevel] = useState(100);
-  const [showProModal, setShowProModal] = useState(false);
   const [gameMode, setGameMode] = useState<GameMode>("ai");
   const [hasLoadedSave, setHasLoadedSave] = useState(false);
-  const [lastMove, setLastMove] = useState<LastMove>(null);
+
+  const [showProModal, setShowProModal] = useState(false);
+  const [lastMove, setLastMove] = useState<LastMove | null>(null);
   const [showIntro, setShowIntro] = useState(true);
-  const [abilityFlash, setAbilityFlash] = useState<AbilityFlash>(null);
-  const [moveHistory, setMoveHistory] = useState<string[]>([]);
+  const [abilityFlash, setAbilityFlash] = useState<
+    "inject" | "threat" | "shield" | null
+  >(null);
+
+  const [user, setUser] = useState<User | null>(null);
+  const [recentGames, setRecentGames] = useState<RecentGame[]>([]);
+  const [authMessage, setAuthMessage] = useState<string | null>(null);
+  const [hasSavedFinishedGame, setHasSavedFinishedGame] = useState(false);
 
   const game = new Chess(fen);
   const board = game.board();
@@ -90,6 +110,116 @@ export function useChessGame() {
 
     localStorage.setItem(STORAGE_KEY, JSON.stringify(saveData));
   }, [fen, message, compoundLevel, gameMode, moveHistory, hasLoadedSave]);
+
+  useEffect(() => {
+    async function loadUser() {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      setUser(session?.user ?? null);
+
+      if (session?.user) {
+        await loadRecentGames(session.user.id);
+      }
+    }
+
+    loadUser();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+
+      if (session?.user) {
+        loadRecentGames(session.user.id);
+      } else {
+        setRecentGames([]);
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!user) return;
+    if (!isGameFinished) return;
+
+    saveFinishedGame(new Chess(fen));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fen, user, isGameFinished]);
+
+  async function signInWithGithub() {
+    setAuthMessage(null);
+
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "github",
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`,
+      },
+    });
+
+    if (error) {
+      setAuthMessage(error.message);
+    }
+  }
+
+  async function signOut() {
+    const { error } = await supabase.auth.signOut();
+
+    if (error) {
+      setAuthMessage(error.message);
+      return;
+    }
+
+    setUser(null);
+    setRecentGames([]);
+    setAuthMessage("Signed out.");
+  }
+
+  async function loadRecentGames(userId: string) {
+    const { data, error } = await supabase
+      .from("games")
+      .select("id, result, game_mode, compound_left, created_at")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false })
+      .limit(5);
+
+    if (error) {
+      setAuthMessage(error.message);
+      return;
+    }
+
+    setRecentGames(data ?? []);
+  }
+
+  async function saveFinishedGame(chessGame: Chess) {
+    if (!user) return;
+    if (!chessGame.isGameOver()) return;
+    if (hasSavedFinishedGame) return;
+
+    const result = getGameResult(chessGame);
+    const pgn = chessGame.pgn();
+
+    const { error } = await supabase.from("games").insert({
+      user_id: user.id,
+      result,
+      pgn,
+      game_mode: gameMode,
+      compound_left: compoundLevel,
+    });
+
+    if (error) {
+      setAuthMessage(error.message);
+      return;
+    }
+
+    setHasSavedFinishedGame(true);
+    setAuthMessage("Mission saved to Supabase.");
+    await loadRecentGames(user.id);
+  }
 
   function clearSelection() {
     setSelectedSquare(null);
@@ -160,7 +290,6 @@ export function useChessGame() {
         from: aiMove.from as Square,
         to: aiMove.to as Square,
       });
-
       setMoveHistory((history) => [...history, aiMove.san]);
 
       setMessage(
@@ -206,7 +335,7 @@ export function useChessGame() {
       setBlunderWarning(null);
 
       if (chess.isGameOver()) {
-        setMessage(getStatus(chess));
+        setMessage(`Mission complete. ${getStatus(chess)}`);
         return;
       }
 
@@ -376,6 +505,7 @@ export function useChessGame() {
     setLastMove(null);
     setAbilityFlash(null);
     setMoveHistory([]);
+    setHasSavedFinishedGame(false);
   }
 
   function changeGameMode(mode: GameMode) {
@@ -395,6 +525,7 @@ export function useChessGame() {
     setLastMove(null);
     setAbilityFlash(null);
     setMoveHistory([]);
+    setHasSavedFinishedGame(false);
 
     localStorage.removeItem(STORAGE_KEY);
 
@@ -526,6 +657,13 @@ export function useChessGame() {
     changeGameMode,
     injectV,
     threatVision,
+
+    user,
+    recentGames,
+    authMessage,
+    signInWithGithub,
+    signOut,
+
     getGameResult: () => getGameResult(game),
     getMissionRating: () =>
       getMissionRating(game, moveHistory.length, compoundLevel),
