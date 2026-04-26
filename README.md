@@ -105,9 +105,5 @@ The result is not just a chessboard, but a product concept with engagement, rete
 - CSS animations
 - Vercel
 
-## Installation
-
-Clone the repository:
-
-```bash
-git clone https://github.com/your-username/v-chess.git
+Play:
+https://v-chess-self.vercel.app/
