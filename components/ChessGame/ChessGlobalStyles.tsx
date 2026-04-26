@@ -263,6 +263,15 @@ export default function ChessGlobalStyles() {
           -webkit-tap-highlight-color: transparent;
         }
       }
-    `}</style>
+    .mobile-vpanel-hint {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  .mobile-vpanel-hint {
+    display: block;
+    animation: blinkText 1.4s infinite;
+  }
+}`}</style>
   );
 }

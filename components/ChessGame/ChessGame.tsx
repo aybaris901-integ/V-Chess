@@ -97,21 +97,42 @@ export default function ChessGame() {
           </p>
 
           <p
-            className="glass-card"
-            style={{
-              minHeight: "24px",
-              marginBottom: "18px",
-              padding: "13px 16px",
-              borderLeft: "4px solid #ac1820",
-              borderRadius: "16px",
-              color: "#f8f1d8",
-              fontFamily: "'Inter', sans-serif",
-              fontWeight: 700,
-              lineHeight: 1.45,
-            }}
-          >
-            {chess.message}
-          </p>
+  className="glass-card"
+  style={{
+    minHeight: "24px",
+    marginBottom: "18px",
+    padding: "13px 16px",
+    borderLeft: "4px solid #ac1820",
+    borderRadius: "16px",
+    color: "#f8f1d8",
+    fontFamily: "'Inter', sans-serif",
+    fontWeight: 700,
+    lineHeight: 1.45,
+  }}
+>
+  {chess.message}
+</p>
+
+{chess.blunderWarning && (
+  <div
+    className="danger-shake"
+    style={{
+      marginBottom: "18px",
+      padding: "12px 14px",
+      background: "rgba(239, 68, 68, 0.18)",
+      border: "2px solid rgba(239, 68, 68, 0.75)",
+      borderLeft: "8px solid #ef4444",
+      borderRadius: "12px",
+      color: "#fecaca",
+      fontFamily: "'Inter', sans-serif",
+      fontWeight: 800,
+      lineHeight: 1.4,
+      boxShadow: "0 12px 30px rgba(239,68,68,0.18)",
+    }}
+  >
+    ⚠️ Blunder Shield activated. Scroll to V-Panel for details, or click the same square again to confirm.
+  </div>
+)}
 
           <ChessBoard
             board={chess.board}
@@ -143,15 +164,52 @@ export default function ChessGame() {
           </button>
 
           <p
-            style={{
-              marginTop: "18px",
-              color: "#b8aa82",
-              fontSize: "14px",
-              fontFamily: "'Inter', sans-serif",
-            }}
-          >
-            Controls: click a piece, then click one of the highlighted squares.
-          </p>
+  style={{
+    marginTop: "18px",
+    color: "#c9b98f",
+    fontSize: "14px",
+    fontFamily: "Arial, sans-serif",
+  }}
+>
+  Controls: click a piece, then click one of the highlighted squares.
+</p>
+
+<button
+  className="mobile-vpanel-hint"
+  onClick={() =>
+    document.getElementById("v-panel")?.scrollIntoView({ behavior: "smooth" })
+  }
+  style={{
+    marginTop: "10px",
+    padding: "10px 14px",
+    width: "100%",
+    color: "#111",
+    background: "#ffcb05",
+    border: "2px solid #ac1820",
+    fontSize: "13px",
+    fontFamily: "Arial, sans-serif",
+    fontWeight: 900,
+    textTransform: "uppercase",
+    cursor: "pointer",
+    boxShadow: "4px 4px 0 #050505",
+  }}
+>
+  ↓ Open V-Panel Powers
+</button>
+
+           <p
+  className="mobile-vpanel-hint"
+  style={{
+    marginTop: "10px",
+    color: "#ffcb05",
+    fontSize: "13px",
+    fontFamily: "Arial, sans-serif",
+    fontWeight: 800,
+    textTransform: "uppercase",
+  }}
+>
+  ↓ Scroll down to access V-Panel powers
+</p>
         </div>
 
         <VPanel

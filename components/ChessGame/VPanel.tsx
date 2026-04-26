@@ -43,6 +43,7 @@ export default function VPanel({
   return (
     <aside
       className="glass-card"
+      id="v-panel"
       style={{
         borderRadius: "24px",
         padding: "24px",
