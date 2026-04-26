@@ -27,6 +27,10 @@ Instead of replacing chess skill, the app turns AI assistance into a game mechan
 - Responsive design for desktop and mobile
 - Game Summary after the match
 - Animated tactical UI effects
+- GitHub authentication with Supabase
+- Player profile after sign-in
+- Saving completed games to Supabase
+- Recent Missions list for authenticated users
 
 ## AI-Powered Abilities
 
@@ -104,6 +108,16 @@ The result is not just a chessboard, but a product concept with engagement, rete
 - LocalStorage
 - CSS animations
 - Vercel
+- Supabase Auth
+- Supabase Database
+
+## Authentication and Saved Games
+
+V-Chess uses Supabase for authentication and game persistence.
+
+Players can sign in with GitHub. After signing in, the app displays the player profile in the V-Panel. When a mission is completed, the game result is saved to Supabase with the player ID, result, PGN, game mode, remaining Compound V level, and creation date.
+
+Authenticated users can see their latest saved games in the Recent Missions section.
 
 Play:
 https://v-chess-self.vercel.app/
