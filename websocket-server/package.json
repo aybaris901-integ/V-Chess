@@ -1,0 +1,15 @@
+{
+  "name": "v-chess-websocket-server",
+  "version": "1.0.0",
+  "description": "WebSocket server for V-Chess online multiplayer",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^5.1.0",
+    "socket.io": "^4.8.1"
+  }
+}
