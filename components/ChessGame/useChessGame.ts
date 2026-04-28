@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Chess, Move, Square } from "chess.js";
 import { supabase } from "@/lib/supabaseClient";
 import type { User } from "@supabase/supabase-js";
+import { io, Socket } from "socket.io-client";
 
 import { pieceSymbols, STORAGE_KEY } from "./constants";
 import {
@@ -53,6 +54,12 @@ export function useChessGame() {
   const [recentGames, setRecentGames] = useState<RecentGame[]>([]);
   const [authMessage, setAuthMessage] = useState<string | null>(null);
   const [hasSavedFinishedGame, setHasSavedFinishedGame] = useState(false);
+
+  const [socket, setSocket] = useState<Socket | null>(null);
+  const [onlineRoomCode, setOnlineRoomCode] = useState("");
+  const [joinRoomInput, setJoinRoomInput] = useState("");
+  const [onlineColor, setOnlineColor] = useState<"w" | "b" | null>(null);
+  const [onlineStatus, setOnlineStatus] = useState("Not connected.");
 
   const game = new Chess(fen);
   const board = game.board();
@@ -165,6 +172,91 @@ export function useChessGame() {
       setAuthMessage(error.message);
     }
   }
+
+  useEffect(() => {
+  const socketUrl = process.env.NEXT_PUBLIC_SOCKET_URL;
+
+  if (!socketUrl) {
+    setOnlineStatus("Socket URL is missing.");
+    return;
+  }
+
+  const newSocket = io(socketUrl, {
+    transports: ["websocket"],
+  });
+
+  setSocket(newSocket);
+
+  newSocket.on("connect", () => {
+    setOnlineStatus("Connected to multiplayer server.");
+  });
+
+  newSocket.on("disconnect", () => {
+    setOnlineStatus("Disconnected from multiplayer server.");
+  });
+
+  newSocket.on("room-created", ({ roomCode, color }) => {
+    setOnlineRoomCode(roomCode);
+    setOnlineColor(color);
+    setGameMode("online");
+    setMessage("Online Duel: You are White. Waiting for opponent...");
+    setOnlineStatus(`Room created: ${roomCode}`);
+  });
+
+  newSocket.on("room-joined", ({ roomCode, color, fen, moves }) => {
+    setOnlineRoomCode(roomCode);
+    setOnlineColor(color);
+    setGameMode("online");
+
+    if (fen) {
+      setFen(fen);
+    }
+
+    if (Array.isArray(moves)) {
+      setMoveHistory(moves);
+    }
+
+    setMessage("Online Duel: You are Black.");
+    setOnlineStatus(`Joined room: ${roomCode}`);
+  });
+
+  newSocket.on("player-joined", () => {
+    setOnlineStatus("Opponent joined. Online Duel started.");
+    setMessage("Online Duel started. White to move.");
+  });
+
+  newSocket.on("receive-move", ({ fen, move }) => {
+    setFen(fen);
+
+    if (move?.san) {
+      setMoveHistory((history) => [...history, move.san]);
+      setMessage(`Opponent played ${move.san}. ${getStatus(new Chess(fen))}`);
+    } else {
+      setMessage(getStatus(new Chess(fen)));
+    }
+
+    setSelectedSquare(null);
+    setLegalMoves([]);
+    setPendingMove(null);
+    setBlunderWarning(null);
+    setAiHint(null);
+    setThreats([]);
+  });
+
+  newSocket.on("room-error", (errorMessage) => {
+    setOnlineStatus(errorMessage);
+  });
+
+  newSocket.on("opponent-disconnected", () => {
+    setOnlineStatus("Opponent disconnected.");
+  });
+
+  return () => {
+    newSocket.disconnect();
+  };
+}, []);
+
+
 
   async function signOut() {
     const { error } = await supabase.auth.signOut();
@@ -340,11 +432,25 @@ export function useChessGame() {
       }
 
       if (gameMode === "ai") {
-        setMessage(`You played ${move.san}. AI is thinking...`);
-        makeAiMove(chess);
-      } else {
-        setMessage(getStatus(chess));
-      }
+  setMessage(`You played ${move.san}. AI is thinking...`);
+  makeAiMove(chess);
+} else if (gameMode === "online") {
+  setMessage(`You played ${move.san}. Waiting for opponent...`);
+
+  if (socket && onlineRoomCode) {
+    socket.emit("send-move", {
+      roomCode: onlineRoomCode,
+      fen: chess.fen(),
+      move: {
+        san: move.san,
+        from: move.from,
+        to: move.to,
+      },
+    });
+  }
+} else {
+  setMessage(getStatus(chess));
+}
     } catch {
       setMessage(`Illegal move: ${from} to ${to}.`);
       clearSelection();
@@ -366,6 +472,18 @@ export function useChessGame() {
       return;
     }
 
+    if (gameMode === "online") {
+  if (!onlineRoomCode || !onlineColor) {
+    setMessage("Create or join an online room first.");
+    return;
+  }
+
+  if (chess.turn() !== onlineColor) {
+    setMessage("Wait for your opponent's move.");
+    return;
+  }
+}
+
     const piece = chess.get(square);
 
     if (!selectedSquare) {
@@ -383,6 +501,15 @@ export function useChessGame() {
         setMessage(chess.turn() === "w" ? "White to move." : "Black to move.");
         return;
       }
+
+      if (gameMode === "online" && piece.color !== onlineColor) {
+  setMessage(
+    onlineColor === "w"
+      ? "You are playing White."
+      : "You are playing Black."
+  );
+  return;
+}
 
       const moves = chess.moves({
         square,
@@ -404,10 +531,13 @@ export function useChessGame() {
     }
 
     if (
-      piece &&
-      ((gameMode === "ai" && piece.color === "w") ||
-        (gameMode === "local" && piece.color === chess.turn()))
-    ) {
+  piece &&
+  ((gameMode === "ai" && piece.color === "w") ||
+    (gameMode === "local" && piece.color === chess.turn()) ||
+    (gameMode === "online" &&
+      piece.color === onlineColor &&
+      piece.color === chess.turn()))
+) {
       const moves = chess.moves({
         square,
         verbose: true,
@@ -526,10 +656,24 @@ export function useChessGame() {
     setAbilityFlash(null);
     setMoveHistory([]);
     setHasSavedFinishedGame(false);
+    setOnlineRoomCode("");
+setJoinRoomInput("");
+setOnlineColor(null);
+setOnlineStatus(
+  mode === "online"
+    ? "Create or join a room to start Online Duel."
+    : "Not connected."
+);
 
     localStorage.removeItem(STORAGE_KEY);
 
-    setMessage(mode === "ai" ? "White to move" : "Local Duel: White to move");
+    setMessage(
+  mode === "ai"
+    ? "White to move"
+    : mode === "local"
+    ? "Local Duel: White to move"
+    : "Online Duel: create or join a room."
+);
   }
 
   function injectV() {
@@ -629,6 +773,35 @@ export function useChessGame() {
     }, 650);
   }
 
+  function createOnlineRoom() {
+  if (!socket) {
+    setOnlineStatus("Socket is not connected.");
+    return;
+  }
+
+  resetGame();
+  socket.emit("create-room");
+}
+
+function joinOnlineRoom() {
+  if (!socket) {
+    setOnlineStatus("Socket is not connected.");
+    return;
+  }
+
+  const code = joinRoomInput.trim().toUpperCase();
+
+  if (!code) {
+    setOnlineStatus("Enter a room code first.");
+    return;
+  }
+
+  resetGame();
+  socket.emit("join-room", {
+    roomCode: code,
+  });
+}
+
   return {
     fen,
     game,
@@ -667,5 +840,12 @@ export function useChessGame() {
     getGameResult: () => getGameResult(game),
     getMissionRating: () =>
       getMissionRating(game, moveHistory.length, compoundLevel),
+    onlineRoomCode,
+joinRoomInput,
+setJoinRoomInput,
+onlineColor,
+onlineStatus,
+createOnlineRoom,
+joinOnlineRoom,
   };
 }
