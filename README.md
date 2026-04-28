@@ -1,6 +1,6 @@
 # V-Chess
 
-V-Chess is a modern AI-powered chess web app with tactical “superpowers”.
+V-Chess is a modern AI-powered chess web app with tactical “superpowers”, GitHub authentication, saved missions, and real-time Online Duel multiplayer.
 
 Unlike traditional chess platforms that only let users play standard games, V-Chess adds a gamified AI layer on top of chess. Players can activate limited tactical abilities during the match, manage their Compound V energy, avoid critical mistakes, and experience chess as a cinematic strategy battle.
 
@@ -31,6 +31,10 @@ Instead of replacing chess skill, the app turns AI assistance into a game mechan
 - Player profile after sign-in
 - Saving completed games to Supabase
 - Recent Missions list for authenticated users
+- Online Duel mode with real-time multiplayer
+- Room creation and room joining by code
+- Real-time move synchronization through Socket.io
+- Separate WebSocket server for online multiplayer
 
 ## AI-Powered Abilities
 
@@ -69,6 +73,24 @@ The player controls White and plays against a simple AI opponent.
 ### Local Duel
 
 Two players can play on the same screen. This mode disables AI assistance to keep the local match fair.
+
+
+## Online Multiplayer
+
+V-Chess includes an Online Duel mode powered by a separate WebSocket server.
+
+Players can create a multiplayer room, share the room code with another player, and play against each other in real time. The first player becomes White, and the second player joins as Black.
+
+The multiplayer system uses a separate Node.js + Express + Socket.io server deployed outside of Vercel. This keeps the frontend deployment stable while allowing real-time communication between players.
+
+Current Online Duel features:
+
+- Create room
+- Join room by room code
+- Assign White and Black players
+- Sync moves in real time
+- Share current FEN position between players
+- Handle opponent disconnect events
 
 ## Monetization Concept
 
@@ -110,6 +132,10 @@ The result is not just a chessboard, but a product concept with engagement, rete
 - Vercel
 - Supabase Auth
 - Supabase Database
+- Socket.io
+- Node.js WebSocket server
+- Express
+- Render
 
 ## Authentication and Saved Games
 
