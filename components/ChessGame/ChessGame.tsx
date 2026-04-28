@@ -235,6 +235,13 @@ export default function ChessGame() {
   authMessage={chess.authMessage}
   signInWithGithub={chess.signInWithGithub}
   signOut={chess.signOut}
+  onlineRoomCode={chess.onlineRoomCode}
+joinRoomInput={chess.joinRoomInput}
+setJoinRoomInput={chess.setJoinRoomInput}
+onlineColor={chess.onlineColor}
+onlineStatus={chess.onlineStatus}
+createOnlineRoom={chess.createOnlineRoom}
+joinOnlineRoom={chess.joinOnlineRoom}
 />
       </section>
 

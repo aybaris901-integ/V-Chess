@@ -1,6 +1,6 @@
 import type { Square } from "chess.js";
 
-export type GameMode = "ai" | "local";
+export type GameMode = "ai" | "local" | "online";
 
 export type LastMove = {
   from: Square;

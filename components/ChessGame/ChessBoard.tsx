@@ -11,6 +11,7 @@ type ChessBoardProps = {
   legalMoves: Square[];
   lastMove: LastMove | null;
   onSquareClick: (square: Square) => void;
+
 };
 
 export default function ChessBoard({

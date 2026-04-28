@@ -28,6 +28,13 @@ type VPanelProps = {
   onInjectV: () => void;
   onThreatVision: () => void;
   onOpenProModal: () => void;
+  onlineRoomCode: string;
+joinRoomInput: string;
+setJoinRoomInput: (value: string) => void;
+onlineColor: "w" | "b" | null;
+onlineStatus: string;
+createOnlineRoom: () => void;
+joinOnlineRoom: () => void;
 
   user: User | null;
   recentGames: RecentGame[];
@@ -59,6 +66,13 @@ export default function VPanel({
   authMessage,
   signInWithGithub,
   signOut,
+    onlineRoomCode,
+joinRoomInput,
+setJoinRoomInput,
+onlineColor,
+onlineStatus,
+createOnlineRoom,
+joinOnlineRoom,
 }: VPanelProps) {
   return (
     <aside
@@ -278,6 +292,114 @@ export default function VPanel({
           Mission Mode
         </strong>
 
+          {gameMode === "online" && (
+  <div
+    style={{
+      marginBottom: "18px",
+      padding: "14px",
+      borderRadius: "12px",
+      background: "rgba(255,255,255,0.04)",
+      border: "1px solid rgba(255, 203, 5, 0.25)",
+    }}
+  >
+    <strong style={{ color: "#ffcb05", textTransform: "uppercase" }}>
+      Online Room
+    </strong>
+
+    <p
+      style={{
+        marginTop: "8px",
+        color: "#d6c99c",
+        fontFamily: "Arial, sans-serif",
+        fontSize: "14px",
+        lineHeight: 1.4,
+      }}
+    >
+      {onlineStatus}
+    </p>
+
+    {onlineRoomCode && (
+      <p
+        style={{
+          marginTop: "10px",
+          color: "#ffcb05",
+          fontFamily: "Arial, sans-serif",
+          fontWeight: 900,
+          fontSize: "16px",
+        }}
+      >
+        Room Code: {onlineRoomCode}
+      </p>
+    )}
+
+    {onlineColor && (
+      <p
+        style={{
+          marginTop: "6px",
+          color: "#f5f0df",
+          fontFamily: "Arial, sans-serif",
+          fontSize: "14px",
+        }}
+      >
+        You are playing {onlineColor === "w" ? "White" : "Black"}
+      </p>
+    )}
+
+    <button
+      onClick={createOnlineRoom}
+      style={{
+        marginTop: "12px",
+        width: "100%",
+        padding: "11px 12px",
+        borderRadius: "8px",
+        border: "2px solid #ffcb05",
+        background: "#ffcb05",
+        color: "#111",
+        cursor: "pointer",
+        fontWeight: 900,
+        textTransform: "uppercase",
+      }}
+    >
+      Create Room
+    </button>
+
+    <input
+      value={joinRoomInput}
+      onChange={(e) => setJoinRoomInput(e.target.value)}
+      placeholder="Enter room code"
+      style={{
+        marginTop: "12px",
+        width: "100%",
+        padding: "11px 12px",
+        borderRadius: "8px",
+        border: "1px solid rgba(255, 203, 5, 0.45)",
+        background: "rgba(0,0,0,0.35)",
+        color: "#f5f0df",
+        fontWeight: 700,
+        boxSizing: "border-box",
+      }}
+    />
+
+    <button
+      onClick={joinOnlineRoom}
+      style={{
+        marginTop: "10px",
+        width: "100%",
+        padding: "11px 12px",
+        borderRadius: "8px",
+        border: "1px solid rgba(255, 203, 5, 0.45)",
+        background: "transparent",
+        color: "#ffcb05",
+        cursor: "pointer",
+        fontWeight: 900,
+        textTransform: "uppercase",
+      }}
+    >
+      Join Room
+    </button>
+  </div>
+)}
+
         <div
           style={{
             display: "grid",
@@ -301,6 +423,23 @@ export default function VPanel({
           </ModeButton>
         </div>
       </div>
+
+        <button
+  onClick={() => onChangeGameMode("online")}
+  style={{
+    padding: "11px 10px",
+    borderRadius: "12px",
+    border: "2px solid #ffcb05",
+    cursor: "pointer",
+    fontWeight: 900,
+    background: gameMode === "online" ? "#ffcb05" : "#111",
+    color: gameMode === "online" ? "#111" : "#ffcb05",
+    textTransform: "uppercase",
+    letterSpacing: "0.04em",
+  }}
+>
+  Online Duel
+</button>
 
       <CompoundBar compoundLevel={compoundLevel} />
 
