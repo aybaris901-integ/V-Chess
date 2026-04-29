@@ -124,7 +124,7 @@ The result is not just a chessboard, but a product concept with engagement, rete
 ## Tech Stack
 
 - Next.js
-- TypeScript
+- JavaScript
 - React
 - chess.js
 - LocalStorage
